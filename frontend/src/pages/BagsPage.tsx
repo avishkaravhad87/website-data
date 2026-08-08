@@ -14,8 +14,14 @@ export const BagsPage: React.FC = () => {
   useEffect(() => {
     fetch('/api/products/category/bags')
       .then(res => res.json())
-      .then(data => setProducts(data))
-      .catch(err => console.error(err));
+      .then(data => {
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          setProducts([]);
+        }
+      })
+      .catch(err => console.error('Failed to fetch bags:', err));
   }, []);
 
   return (
@@ -34,3 +40,5 @@ export const BagsPage: React.FC = () => {
     </div>
   );
 };
+
+export default BagsPage;
