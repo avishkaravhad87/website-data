@@ -14,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // API Endpoints
 app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/payment', require('./routes/payment'));
 
 // Health Checks & Root Route
 app.get('/', (req, res) => {
