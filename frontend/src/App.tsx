@@ -4,6 +4,7 @@ import { HomePage } from './pages/HomePage';
 import { BagsPage } from './pages/BagsPage';
 import { ClothStoragePage } from './pages/ClothStoragePage';
 import { EquipmentPage } from './pages/EquipmentPage';
+import { CartPage } from './pages/CartPage';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/bags" element={<BagsPage />} />
         <Route path="/cloth-storage" element={<ClothStoragePage />} />
         <Route path="/equipment" element={<EquipmentPage />} />
+        <Route path="/cart" element={<CartPage />} />
       </Routes>
     </Router>
   );
