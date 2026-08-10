@@ -1,1 +1,15 @@
 .env
+
+# GitHub Actions self-hosted runner
+actions-runner/
+
+# Node
+node_modules/
+dist/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
