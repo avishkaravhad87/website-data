@@ -13,14 +13,23 @@ spec:
         app: backend
     spec:
       containers:
-      - name: backend
-        image: <your-docker-registry>/handbag-backend:latest
-        ports:
-        - containerPort: 5000
-        env:
-        - name: MONGO_URI
-          value: "mongodb://mongo-service:27017/handbag_db"
+        - name: backend
+          image: avishkaravhad87/website-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            - name: MONGO_URI
+              value: "mongodb://mongo-service:27017/handbag-store"
+            - name: RAZORPAY_KEY_ID
+              value: "rzp_test_YOUR_KEY_ID"
+            - name: RAZORPAY_KEY_SECRET
+              value: "YOUR_KEY_SECRET"
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -29,6 +38,7 @@ spec:
   selector:
     app: backend
   ports:
-  - protocol: TCP
-    port: 5000
-    targetPort: 5000
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
