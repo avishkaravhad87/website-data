@@ -1,4 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
+import { ImageDropzone } from '../components/ImageDropzone';
 
 interface Product {
   _id: string;
@@ -10,44 +15,81 @@ interface Product {
   stock: number;
 }
 
-interface ProductForm {
+interface FormData {
   name: string;
   price: string;
   description: string;
   category: string;
-  imageUrl: string;
   stock: string;
+  image: File | null;
+  imageUrl: string;
 }
 
-const emptyForm: ProductForm = {
+const emptyForm: FormData = {
   name: '',
   price: '',
   description: '',
   category: 'bags',
-  imageUrl: '',
   stock: '10',
+  image: null,
+  imageUrl: '',
 };
 
 export const AdminPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [form, setForm] = useState<ProductForm>(emptyForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [products, setProducts] =
+    useState<Product[]>([]);
+
+  const [formData, setFormData] =
+    useState<FormData>(emptyForm);
+
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [loadingProducts, setLoadingProducts] =
+    useState(true);
+
+  const [error, setError] =
+    useState('');
+
+  // =====================================================
+  // LOAD PRODUCTS
+  // =====================================================
 
   const loadProducts = async () => {
     try {
-      const response = await fetch('/api/products');
+      setLoadingProducts(true);
+      setError('');
+
+      const response =
+        await fetch('/api/products');
 
       if (!response.ok) {
-        throw new Error('Failed to load products');
+        throw new Error(
+          'Failed to load products'
+        );
       }
 
-      const data = await response.json();
-      setProducts(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error(error);
-      setMessage('Failed to load products');
+      const data =
+        await response.json();
+
+      setProducts(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        'Unable to load products'
+      );
+
+    } finally {
+      setLoadingProducts(false);
     }
   };
 
@@ -55,89 +97,228 @@ export const AdminPage: React.FC = () => {
     loadProducts();
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
+  // =====================================================
+  // UPDATE FORM FIELD
+  // =====================================================
 
-    setForm((previous) => ({
+  const updateField = (
+    field: keyof FormData,
+    value: string
+  ) => {
+    setFormData((previous) => ({
       ...previous,
-      [name]: value,
+      [field]: value,
     }));
   };
 
-  const resetForm = () => {
-    setForm(emptyForm);
-    setEditingId(null);
+  // =====================================================
+  // UPLOAD IMAGE
+  // =====================================================
+
+  const uploadImage = async (
+    file: File
+  ): Promise<string> => {
+    const imageData = new FormData();
+
+    imageData.append(
+      'image',
+      file
+    );
+
+    const response = await fetch(
+      '/api/products/upload',
+      {
+        method: 'POST',
+        body: imageData,
+      }
+    );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message ||
+        'Image upload failed'
+      );
+    }
+
+    return result.imageUrl;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // =====================================================
+  // SAVE PRODUCT
+  // =====================================================
+
+  const handleSubmit = async (
+    event: React.FormEvent
+  ) => {
+    event.preventDefault();
 
     setLoading(true);
-    setMessage('');
-
-    const productData = {
-      name: form.name,
-      price: Number(form.price),
-      description: form.description,
-      category: form.category,
-      imageUrl: form.imageUrl,
-      stock: Number(form.stock),
-    };
+    setError('');
 
     try {
+      let imageUrl =
+        formData.imageUrl;
+
+      // Upload new image
+      if (formData.image) {
+        imageUrl =
+          await uploadImage(
+            formData.image
+          );
+      }
+
+      // Product JSON
+      const productData = {
+        name: formData.name.trim(),
+
+        price: Number(
+          formData.price
+        ),
+
+        description:
+          formData.description.trim(),
+
+        category:
+          formData.category,
+
+        stock: Number(
+          formData.stock
+        ),
+
+        imageUrl,
+      };
+
+      // Validate
+      if (!productData.name) {
+        throw new Error(
+          'Product name is required'
+        );
+      }
+
+      if (
+        Number.isNaN(
+          productData.price
+        )
+      ) {
+        throw new Error(
+          'Enter a valid price'
+        );
+      }
+
+      if (
+        Number.isNaN(
+          productData.stock
+        )
+      ) {
+        throw new Error(
+          'Enter a valid stock quantity'
+        );
+      }
+
+      if (
+        !editingId &&
+        !imageUrl
+      ) {
+        throw new Error(
+          'Please upload a product image'
+        );
+      }
+
       const url = editingId
         ? `/api/products/${editingId}`
         : '/api/products';
 
-      const method = editingId ? 'PUT' : 'POST';
+      const method = editingId
+        ? 'PUT'
+        : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(productData),
-      });
+      const response =
+        await fetch(
+          url,
+          {
+            method,
 
-      const data = await response.json();
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body: JSON.stringify(
+              productData
+            ),
+          }
+        );
+
+      const result =
+        await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Operation failed');
+        throw new Error(
+          result.message ||
+          'Failed to save product'
+        );
       }
 
-      setMessage(
+      alert(
         editingId
           ? 'Product updated successfully!'
           : 'Product added successfully!'
       );
 
       resetForm();
+
       await loadProducts();
-    } catch (error) {
-      console.error(error);
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : 'Something went wrong'
+
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to save product'
       );
+
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (product: Product) => {
-    setEditingId(product._id);
+  // =====================================================
+  // EDIT PRODUCT
+  // =====================================================
 
-    setForm({
+  const handleEdit = (
+    product: Product
+  ) => {
+    setEditingId(
+      product._id
+    );
+
+    setFormData({
       name: product.name,
-      price: String(product.price),
-      description: product.description,
-      category: product.category,
-      imageUrl: product.imageUrl,
-      stock: String(product.stock ?? 10),
+
+      price:
+        String(product.price),
+
+      description:
+        product.description,
+
+      category:
+        product.category,
+
+      stock:
+        String(product.stock),
+
+      image: null,
+
+      imageUrl:
+        product.imageUrl || '',
     });
+
+    setError('');
 
     window.scrollTo({
       top: 0,
@@ -145,330 +326,527 @@ export const AdminPage: React.FC = () => {
     });
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${name}"?`
-    );
+  // =====================================================
+  // DELETE PRODUCT
+  // =====================================================
+
+  const handleDelete = async (
+    id: string
+  ) => {
+    const confirmed =
+      window.confirm(
+        'Are you sure you want to delete this product?'
+      );
 
     if (!confirmed) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/products/${id}`, {
-        method: 'DELETE',
-      });
+      const response =
+        await fetch(
+          `/api/products/${id}`,
+          {
+            method: 'DELETE',
+          }
+        );
 
-      const data = await response.json();
+      const result =
+        await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to delete product');
+        throw new Error(
+          result.message ||
+          'Delete failed'
+        );
       }
-
-      setMessage('Product deleted successfully!');
 
       if (editingId === id) {
         resetForm();
       }
 
       await loadProducts();
-    } catch (error) {
-      console.error(error);
 
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : 'Failed to delete product'
+      alert(
+        'Product deleted successfully!'
+      );
+
+    } catch (err) {
+      console.error(err);
+
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Delete failed'
       );
     }
   };
 
+  // =====================================================
+  // RESET
+  // =====================================================
+
+  const resetForm = () => {
+    setFormData({
+      ...emptyForm,
+    });
+
+    setEditingId(null);
+    setError('');
+  };
+
+  // =====================================================
+  // RENDER
+  // =====================================================
+
   return (
     <div className="admin-page">
 
-      <div className="admin-header">
-        <div>
-          <span className="admin-label">ADMIN DASHBOARD</span>
-          <h1>Product Management</h1>
-          <p>
-            Add, edit, update prices, manage stock and remove products.
-          </p>
-        </div>
+      <div className="admin-container">
 
-        <div className="admin-count">
-          <strong>{products.length}</strong>
-          <span>Products</span>
-        </div>
-      </div>
+        {/* HEADER */}
 
+        <div className="admin-header">
 
-      {message && (
-        <div className="admin-message">
-          {message}
-        </div>
-      )}
-
-
-      {/* PRODUCT FORM */}
-
-      <div className="admin-form-card">
-
-        <div className="admin-card-header">
           <div>
-            <h2>
-              {editingId ? 'Edit Product' : 'Add New Product'}
-            </h2>
+
+            <p className="admin-eyebrow">
+              STORE MANAGEMENT
+            </p>
+
+            <h1>
+              Product Admin
+            </h1>
 
             <p>
-              {editingId
-                ? 'Update the product information below.'
-                : 'Enter the details of your new product.'}
+              Manage products, prices,
+              stock and images.
             </p>
+
           </div>
 
-          {editingId && (
-            <button
-              type="button"
-              className="admin-cancel"
-              onClick={resetForm}
-            >
-              Cancel Edit
-            </button>
-          )}
+          <div className="admin-count">
+
+            <strong>
+              {products.length}
+            </strong>
+
+            <span>
+              Products
+            </span>
+
+          </div>
+
         </div>
 
 
-        <form
-          className="admin-form"
-          onSubmit={handleSubmit}
-        >
+        {/* ERROR */}
 
-          <div className="admin-form-grid">
-
-            <div className="admin-field">
-              <label>Product Name</label>
-
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="e.g. Handcrafted Leather Tote"
-                required
-              />
-            </div>
-
-
-            <div className="admin-field">
-              <label>Price (₹)</label>
-
-              <input
-                name="price"
-                type="number"
-                min="0"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="2499"
-                required
-              />
-            </div>
-
-
-            <div className="admin-field">
-              <label>Category</label>
-
-              <select
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-              >
-                <option value="bags">Handbags</option>
-                <option value="cloth-storage">
-                  Cloth Storage
-                </option>
-                <option value="equipment">
-                  Other Equipment
-                </option>
-              </select>
-            </div>
-
-
-            <div className="admin-field">
-              <label>Stock</label>
-
-              <input
-                name="stock"
-                type="number"
-                min="0"
-                value={form.stock}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
+        {error && (
+          <div className="admin-error">
+            {error}
           </div>
+        )}
 
 
-          <div className="admin-field">
-            <label>Image URL</label>
+        {/* PRODUCT FORM */}
 
-            <input
-              name="imageUrl"
-              value={form.imageUrl}
-              onChange={handleChange}
-              placeholder="/images/bags/product.jpeg"
-              required
-            />
+        <div className="admin-form-card">
 
-            <small>
-              Example:
-              /images/bags/product.jpeg
-            </small>
-          </div>
+          <div className="section-heading">
 
+            <div>
 
-          <div className="admin-field">
-            <label>Description</label>
+              <h2>
+                {editingId
+                  ? 'Edit Product'
+                  : 'Add New Product'}
+              </h2>
 
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              rows={4}
-              placeholder="Enter product description..."
-              required
-            />
-          </div>
+              <p>
+                Add product information
+                and upload an image.
+              </p>
 
-
-          <div className="admin-form-actions">
-
-            <button
-              type="submit"
-              className="admin-save"
-              disabled={loading}
-            >
-              {loading
-                ? 'Saving...'
-                : editingId
-                  ? 'Update Product'
-                  : 'Add Product'}
-            </button>
+            </div>
 
             {editingId && (
               <button
                 type="button"
-                className="admin-secondary"
+                className="secondary-button"
                 onClick={resetForm}
               >
-                Clear
+                Cancel Edit
               </button>
             )}
 
           </div>
 
-        </form>
-      </div>
 
+          <form
+            onSubmit={handleSubmit}
+            className="admin-form"
+          >
 
-      {/* PRODUCTS */}
+            {/* BASIC INFORMATION */}
 
-      <div className="admin-products">
+            <div className="form-grid">
 
-        <div className="admin-products-header">
-          <div>
-            <h2>All Products</h2>
-            <p>
-              Manage your current products.
-            </p>
-          </div>
-        </div>
+              <div className="form-field">
 
+                <label>
+                  Product Name
+                </label>
 
-        {products.length === 0 ? (
-          <div className="admin-empty">
-            No products found.
-          </div>
-        ) : (
-
-          <div className="admin-product-grid">
-
-            {products.map((product) => (
-
-              <div
-                className="admin-product-card"
-                key={product._id}
-              >
-
-                <div className="admin-product-image">
-
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                  />
-
-                  <span>
-                    {product.category}
-                  </span>
-
-                </div>
-
-
-                <div className="admin-product-content">
-
-                  <h3>{product.name}</h3>
-
-                  <p className="admin-product-description">
-                    {product.description}
-                  </p>
-
-
-                  <div className="admin-product-details">
-
-                    <strong>
-                      ₹{product.price.toLocaleString('en-IN')}
-                    </strong>
-
-                    <span>
-                      Stock: {product.stock}
-                    </span>
-
-                  </div>
-
-
-                  <div className="admin-product-actions">
-
-                    <button
-                      type="button"
-                      className="admin-edit"
-                      onClick={() => handleEdit(product)}
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      className="admin-delete"
-                      onClick={() =>
-                        handleDelete(
-                          product._id,
-                          product.name
-                        )
-                      }
-                    >
-                      Delete
-                    </button>
-
-                  </div>
-
-                </div>
+                <input
+                  type="text"
+                  value={
+                    formData.name
+                  }
+                  onChange={(e) =>
+                    updateField(
+                      'name',
+                      e.target.value
+                    )
+                  }
+                  placeholder="Example: Handmade Leather Bag"
+                  required
+                />
 
               </div>
 
-            ))}
+
+              <div className="form-field">
+
+                <label>
+                  Price (₹)
+                </label>
+
+                <input
+                  type="number"
+                  min="0"
+                  value={
+                    formData.price
+                  }
+                  onChange={(e) =>
+                    updateField(
+                      'price',
+                      e.target.value
+                    )
+                  }
+                  placeholder="2499"
+                  required
+                />
+
+              </div>
+
+
+              <div className="form-field">
+
+                <label>
+                  Category
+                </label>
+
+                <select
+                  value={
+                    formData.category
+                  }
+                  onChange={(e) =>
+                    updateField(
+                      'category',
+                      e.target.value
+                    )
+                  }
+                >
+
+                  <option value="bags">
+                    Handbags
+                  </option>
+
+                  <option value="cloth-storage">
+                    Cloth Storage
+                  </option>
+
+                  <option value="equipment">
+                    Other Equipment
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div className="form-field">
+
+                <label>
+                  Stock
+                </label>
+
+                <input
+                  type="number"
+                  min="0"
+                  value={
+                    formData.stock
+                  }
+                  onChange={(e) =>
+                    updateField(
+                      'stock',
+                      e.target.value
+                    )
+                  }
+                  placeholder="10"
+                  required
+                />
+
+              </div>
+
+            </div>
+
+
+            {/* DESCRIPTION */}
+
+            <div className="form-field">
+
+              <label>
+                Description
+              </label>
+
+              <textarea
+                rows={5}
+                value={
+                  formData.description
+                }
+                onChange={(e) =>
+                  updateField(
+                    'description',
+                    e.target.value
+                  )
+                }
+                placeholder="Describe the product..."
+                required
+              />
+
+            </div>
+
+
+            {/* IMAGE */}
+
+            <div className="form-field">
+
+              <label>
+                Product Image
+              </label>
+
+              <ImageDropzone
+                value={
+                  formData.imageUrl
+                }
+                onChange={(file) =>
+                  setFormData(
+                    (previous) => ({
+                      ...previous,
+                      image: file,
+                    })
+                  )
+                }
+              />
+
+              <p className="upload-help">
+                Drag and drop an image
+                or click to browse.
+                JPG, PNG or WEBP.
+                Maximum 2 MB.
+              </p>
+
+            </div>
+
+
+            {/* ACTIONS */}
+
+            <div className="form-actions">
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={loading}
+              >
+                {loading
+                  ? 'Saving...'
+                  : editingId
+                  ? 'Save Changes'
+                  : 'Add Product'}
+              </button>
+
+
+              {editingId && (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={resetForm}
+                  disabled={loading}
+                >
+                  Clear
+                </button>
+              )}
+
+            </div>
+
+          </form>
+
+        </div>
+
+
+        {/* PRODUCT LIST */}
+
+        <div className="admin-products">
+
+          <div className="section-heading">
+
+            <div>
+
+              <h2>
+                All Products
+              </h2>
+
+              <p>
+                Edit or remove products
+                from your store.
+              </p>
+
+            </div>
 
           </div>
 
-        )}
+
+          {loadingProducts ? (
+
+            <div className="admin-loading">
+              Loading products...
+            </div>
+
+          ) : products.length === 0 ? (
+
+            <div className="empty-products">
+              No products found.
+            </div>
+
+          ) : (
+
+            <div className="admin-product-grid">
+
+              {products.map(
+                (product) => (
+
+                  <div
+                    className="admin-product-card"
+                    key={product._id}
+                  >
+
+                    {/* IMAGE */}
+
+                    <div className="admin-product-image">
+
+                      {product.imageUrl ? (
+
+                        <img
+                          src={
+                            product.imageUrl
+                          }
+                          alt={
+                            product.name
+                          }
+                        />
+
+                      ) : (
+
+                        <div className="no-image">
+                          📷
+                        </div>
+
+                      )}
+
+                    </div>
+
+
+                    {/* CONTENT */}
+
+                    <div className="admin-product-content">
+
+                      <span className="category-badge">
+                        {product.category}
+                      </span>
+
+
+                      <h3>
+                        {product.name}
+                      </h3>
+
+
+                      <p className="admin-description">
+                        {
+                          product.description
+                        }
+                      </p>
+
+
+                      <div className="admin-product-meta">
+
+                        <strong>
+                          ₹
+                          {product.price.toLocaleString(
+                            'en-IN'
+                          )}
+                        </strong>
+
+                        <span>
+                          Stock:{' '}
+                          {product.stock}
+                        </span>
+
+                      </div>
+
+
+                      <div className="admin-card-actions">
+
+                        <button
+                          type="button"
+                          className="edit-button"
+                          onClick={() =>
+                            handleEdit(
+                              product
+                            )
+                          }
+                        >
+                          ✏️ Edit
+                        </button>
+
+
+                        <button
+                          type="button"
+                          className="delete-button"
+                          onClick={() =>
+                            handleDelete(
+                              product._id
+                            )
+                          }
+                        >
+                          🗑️ Delete
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          )}
+
+        </div>
 
       </div>
 

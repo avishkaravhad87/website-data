@@ -1,15 +1,56 @@
 const mongoose = require('mongoose');
 
-const productSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  category: { 
-    type: String, 
-    required: true, 
-    enum: ['bags', 'cloth-storage', 'equipment'] 
+const productSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    price: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+
+    description: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    category: {
+      type: String,
+      required: true,
+      enum: ['bags', 'cloth-storage', 'equipment']
+    },
+
+    imageUrl: {
+      type: String,
+      default: ''
+    },
+
+    // New uploaded image stored directly in MongoDB
+    imageData: {
+      type: Buffer,
+      default: undefined
+    },
+
+    imageMimeType: {
+      type: String,
+      default: ''
+    },
+
+    stock: {
+      type: Number,
+      default: 10,
+      min: 0
+    }
   },
-  price: { type: Number, required: true },
-  description: { type: String, required: true },
-  imageUrl: { type: String, required: true }
-}, { timestamps: true });
+  {
+    timestamps: true
+  }
+);
 
 module.exports = mongoose.model('Product', productSchema);

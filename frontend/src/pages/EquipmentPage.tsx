@@ -1,143 +1,85 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import React, {
+  useEffect,
+  useState
+} from 'react';
 
-interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  description: string;
-  category: string;
-  imageUrl: string;
-  stock: number;
-}
+import ProductCard, {
+  Product
+} from '../components/ProductCard';
 
-export const EquipmentPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+export const EquipmentPage: React.FC =
+  () => {
+    const [products, setProducts] =
+      useState<Product[]>([]);
 
-  const { addToCart } = useCart();
-  const navigate = useNavigate();
+    const [loading, setLoading] =
+      useState(true);
 
-  useEffect(() => {
-    fetch('/api/products/category/equipment')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch equipment products');
-        }
+    useEffect(() => {
+      fetch(
+        '/api/products/category/equipment'
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setProducts(
+            Array.isArray(data)
+              ? data
+              : []
+          );
+        })
+        .catch((err) => {
+          console.error(err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }, []);
 
-        return res.json();
-      })
-      .then((data) => {
-        setProducts(Array.isArray(data) ? data : []);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch equipment:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
+    return (
+      <div className="page-container">
 
-  const handleBuyNow = (product: Product) => {
-    addToCart(product);
-    navigate('/cart');
-  };
+        <div className="collection-header">
 
-  return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Other Equipment Collection</h1>
+          <p className="page-eyebrow">
+            USEFUL COLLECTION
+          </p>
 
-      {loading ? (
-        <p>Loading products...</p>
-      ) : products.length === 0 ? (
-        <p>No equipment products available.</p>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns:
-              'repeat(auto-fill, minmax(250px, 1fr))',
-            gap: '2rem',
-            marginTop: '1rem',
-          }}
-        >
-          {products.map((item) => (
-            <div
-              key={item._id}
-              style={{
-                border: '1px solid #ccc',
-                borderRadius: '8px',
-                padding: '1rem',
-                textAlign: 'center',
-              }}
-            >
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                style={{
-                  width: '100%',
-                  height: '200px',
-                  objectFit: 'cover',
-                  borderRadius: '4px',
-                }}
-              />
+          <h1>
+            Other Equipment
+          </h1>
 
-              <h3>{item.name}</h3>
+          <p>
+            Useful handcrafted equipment
+            for everyday needs.
+          </p>
 
-              <p>{item.description}</p>
-
-              <p
-                style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 'bold',
-                }}
-              >
-                ₹{item.price}
-              </p>
-
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  justifyContent: 'center',
-                  marginTop: '1rem',
-                }}
-              >
-                <button
-                  onClick={() => addToCart(item)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#3498db',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Add to Cart
-                </button>
-
-                <button
-                  onClick={() => handleBuyNow(item)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#2ecc71',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Buy Now
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
-      )}
-    </div>
-  );
-};
+
+        {loading ? (
+          <div className="loading">
+            Loading products...
+          </div>
+        ) : products.length === 0 ? (
+          <div className="empty-products">
+            No equipment available yet.
+          </div>
+        ) : (
+          <div className="product-grid">
+
+            {products.map(
+              (product) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                />
+              )
+            )}
+
+          </div>
+        )}
+
+      </div>
+    );
+  };
 
 export default EquipmentPage;

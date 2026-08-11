@@ -1,156 +1,224 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import React, {
+  useEffect,
+  useState
+} from 'react';
 
-interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  description: string;
-  category: string;
-  imageUrl: string;
-  stock: number;
-}
+import ProductCard, {
+  Product
+} from '../components/ProductCard';
 
 export const HomePage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] =
+    useState<Product[]>([]);
 
-  const { addToCart } = useCart();
-  const navigate = useNavigate();
+  const [loading, setLoading] =
+    useState(true);
 
   useEffect(() => {
     fetch('/api/products')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch products');
-        }
-
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
-        setProducts(Array.isArray(data) ? data : []);
+        setProducts(
+          Array.isArray(data)
+            ? data
+            : []
+        );
       })
       .catch((err) => {
-        console.error('Failed to fetch products:', err);
+        console.error(err);
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  const handleBuyNow = (product: Product) => {
-    addToCart(product);
-    navigate('/cart');
-  };
-
-  if (loading) {
-    return (
-      <div style={{ padding: '2rem' }}>
-        <h2>Loading products...</h2>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Welcome to Handbag Store</h1>
+    <div>
 
-      <p>
-        Explore our collection of handmade bags, cloth storage and
-        equipment.
-      </p>
+      {/* HERO */}
 
-      <h2 style={{ marginTop: '2rem' }}>Our Products</h2>
+      <section className="home-hero">
 
-      {products.length === 0 ? (
-        <p>No products available.</p>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns:
-              'repeat(auto-fill, minmax(250px, 1fr))',
-            gap: '2rem',
-            marginTop: '1rem',
-          }}
-        >
-          {products.map((item) => (
-            <div
-              key={item._id}
-              style={{
-                border: '1px solid #ccc',
-                borderRadius: '8px',
-                padding: '1rem',
-                textAlign: 'center',
-              }}
+        <div className="hero-content">
+
+          <p className="hero-eyebrow">
+            HANDMADE • UNIQUE • BEAUTIFUL
+          </p>
+
+          <h1>
+            Crafted With
+            <br />
+            <span>Care & Passion</span>
+          </h1>
+
+          <p>
+            Discover beautiful handcrafted
+            products made for everyday life.
+          </p>
+
+          <div className="hero-actions">
+
+            <a
+              href="/bags"
+              className="hero-button"
             >
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                style={{
-                  width: '100%',
-                  height: '200px',
-                  objectFit: 'cover',
-                  borderRadius: '4px',
-                }}
-              />
+              Explore Collection
+            </a>
 
-              <h3>{item.name}</h3>
+            <a
+              href="/contact"
+              className="hero-button secondary"
+            >
+              Contact Us
+            </a>
 
-              <p>{item.description}</p>
+          </div>
 
-              <p
-                style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 'bold',
-                }}
-              >
-                ₹{item.price}
-              </p>
-
-              <p>Category: {item.category}</p>
-
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  justifyContent: 'center',
-                  marginTop: '1rem',
-                }}
-              >
-                <button
-                  onClick={() => addToCart(item)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#3498db',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Add to Cart
-                </button>
-
-                <button
-                  onClick={() => handleBuyNow(item)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#2ecc71',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Buy Now
-                </button>
-              </div>
-            </div>
-          ))}
         </div>
-      )}
+
+      </section>
+
+      {/* CATEGORY CARDS */}
+
+      <section className="home-section">
+
+        <div className="section-title">
+
+          <p className="page-eyebrow">
+            SHOP BY CATEGORY
+          </p>
+
+          <h2>
+            Find Something Special
+          </h2>
+
+        </div>
+
+        <div className="category-grid">
+
+          <a
+            href="/bags"
+            className="category-card bags-category"
+          >
+            <span>
+              👜
+            </span>
+
+            <h3>
+              Handbags
+            </h3>
+
+            <p>
+              Handmade bags for
+              everyday style.
+            </p>
+          </a>
+
+          <a
+            href="/cloth-storage"
+            className="category-card storage-category"
+          >
+            <span>
+              🧺
+            </span>
+
+            <h3>
+              Cloth Storage
+            </h3>
+
+            <p>
+              Beautiful storage
+              solutions for your home.
+            </p>
+          </a>
+
+          <a
+            href="/equipment"
+            className="category-card equipment-category"
+          >
+            <span>
+              🛠️
+            </span>
+
+            <h3>
+              Other Equipment
+            </h3>
+
+            <p>
+              Useful products
+              for everyday needs.
+            </p>
+          </a>
+
+        </div>
+
+      </section>
+
+      {/* PRODUCTS */}
+
+      <section className="home-section">
+
+        <div className="section-title">
+
+          <p className="page-eyebrow">
+            OUR PRODUCTS
+          </p>
+
+          <h2>
+            Featured Products
+          </h2>
+
+          <p>
+            Products added from the
+            Admin dashboard appear here
+            automatically.
+          </p>
+
+        </div>
+
+        {loading ? (
+          <div className="loading">
+            Loading products...
+          </div>
+        ) : products.length === 0 ? (
+          <div className="empty-products">
+            No products available yet.
+          </div>
+        ) : (
+          <div className="product-grid">
+
+            {products.slice(0, 8).map(
+              (product) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                />
+              )
+            )}
+
+          </div>
+        )}
+
+      </section>
+
+      {/* CTA */}
+
+      <section className="home-cta">
+
+        <h2>
+          Have a Question?
+        </h2>
+
+        <p>
+          We would love to hear from you.
+        </p>
+
+        <a href="/contact">
+          Contact Us
+        </a>
+
+      </section>
+
     </div>
   );
 };

@@ -2,25 +2,27 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
-interface Product {
+export interface Product {
   _id: string;
   name: string;
   price: number;
   description: string;
   category: string;
   imageUrl: string;
-  stock?: number;
+  stock: number;
 }
 
 interface ProductCardProps {
   product: Product;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<
+  ProductCardProps
+> = ({ product }) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
-  const handleBuyNow = () => {
+  const buyNow = () => {
     addToCart(product);
     navigate('/cart');
   };
@@ -29,51 +31,64 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div className="product-card">
 
       <div className="product-image-wrapper">
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          className="product-image"
-        />
 
-        {product.stock !== undefined && product.stock <= 5 && (
-          <span className="stock-badge">
-            Only {product.stock} left
-          </span>
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="product-image"
+          />
+        ) : (
+          <div className="product-image-placeholder">
+            📷
+          </div>
         )}
+
       </div>
 
       <div className="product-card-content">
 
-        <span className="product-category">
-          {product.category}
-        </span>
-
-        <h3>{product.name}</h3>
+        <h3>
+          {product.name}
+        </h3>
 
         <p className="product-description">
           {product.description}
         </p>
 
-        <div className="product-bottom">
+        <div className="product-price">
+          ₹
+          {product.price.toLocaleString(
+            'en-IN'
+          )}
+        </div>
 
-          <span className="product-price">
-            ₹{product.price.toLocaleString('en-IN')}
-          </span>
-
+        <div className="product-stock">
+          {product.stock > 0
+            ? `${product.stock} available`
+            : 'Out of stock'}
         </div>
 
         <div className="product-actions">
 
           <button
-            className="btn-cart"
-            onClick={() => addToCart(product)}
+            className="add-cart-button"
+            disabled={
+              product.stock <= 0
+            }
+            onClick={() =>
+              addToCart(product)
+            }
           >
             Add to Cart
           </button>
 
           <button
-            className="btn-buy"
-            onClick={handleBuyNow}
+            className="buy-now-button"
+            disabled={
+              product.stock <= 0
+            }
+            onClick={buyNow}
           >
             Buy Now
           </button>

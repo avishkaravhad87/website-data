@@ -1,0 +1,122 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"backend-service","namespace":"default"},"spec":{"ports":[{"port":5000,"protocol":"TCP","targetPort":5000}],"selector":{"app":"backend"},"type":"ClusterIP"}}
+    creationTimestamp: "2026-08-08T19:32:17Z"
+    name: backend-service
+    namespace: default
+    resourceVersion: "79273"
+    uid: 5a6ccf0d-f296-445d-8bec-0d60024692e0
+  spec:
+    clusterIP: 10.96.4.61
+    clusterIPs:
+    - 10.96.4.61
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 5000
+      protocol: TCP
+      targetPort: 5000
+    selector:
+      app: backend
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"frontend-service","namespace":"default"},"spec":{"ports":[{"nodePort":30080,"port":80,"protocol":"TCP","targetPort":80}],"selector":{"app":"frontend"},"type":"NodePort"}}
+    creationTimestamp: "2026-08-10T09:10:24Z"
+    name: frontend-service
+    namespace: default
+    resourceVersion: "79304"
+    uid: cc034d53-b939-437a-bbe3-a56978d9cad4
+  spec:
+    clusterIP: 10.96.154.12
+    clusterIPs:
+    - 10.96.154.12
+    externalTrafficPolicy: Cluster
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - nodePort: 30080
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    selector:
+      app: frontend
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: "2026-07-22T12:27:04Z"
+    labels:
+      component: apiserver
+      provider: kubernetes
+    name: kubernetes
+    namespace: default
+    resourceVersion: "194"
+    uid: 2555702a-cf69-4f58-ab0b-7d04846e94c3
+  spec:
+    clusterIP: 10.96.0.1
+    clusterIPs:
+    - 10.96.0.1
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 6443
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"name":"mongo-service","namespace":"default"},"spec":{"ports":[{"port":27017,"protocol":"TCP","targetPort":27017}],"selector":{"app":"mongo"},"type":"ClusterIP"}}
+    creationTimestamp: "2026-08-08T19:31:55Z"
+    name: mongo-service
+    namespace: default
+    resourceVersion: "79271"
+    uid: 0cc6a8dd-6344-4152-a83c-86a23517eed1
+  spec:
+    clusterIP: 10.96.87.5
+    clusterIPs:
+    - 10.96.87.5
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - port: 27017
+      protocol: TCP
+      targetPort: 27017
+    selector:
+      app: mongo
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""
